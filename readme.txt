@@ -1,0 +1,10 @@
+name = example-plugin
+title = Example Plugin
+description = A starting point for building your own OpenPanel plugin - adds a page, a sidebar link, a dashboard icon, and a search entry.
+link = /new-plugin
+version = 1.0.0
+author = Your Name
+category = advanced
+icon = bi bi-puzzle
+show_in_search = 1
+help_link = https://github.com/stefanpejcic/openpanel-plugin-boilerplate

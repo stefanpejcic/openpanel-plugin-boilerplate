@@ -1,0 +1,45 @@
+name: Build
+
+# Builds prebuilt binaries for amd64 and arm64 and commits them straight
+# into the repo, so installing this plugin never needs a compiler on the
+# OpenPanel server - install.sh just picks the binary matching the host's
+# architecture. Runs on push (when the source actually changed), on demand,
+# and weekly - the weekly/on-demand runs rebuild even with no source changes,
+# which catches drift from a newer Go toolchain on the runner image.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.go'
+      - 'go.mod'
+      - '.github/workflows/build.yml'
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 3 * * 1' # weekly, Monday 03:00 UTC
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Build amd64
+        run: GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o plugin-linux-amd64 .
+
+      - name: Build arm64
+        run: GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -trimpath -o plugin-linux-arm64 .
+
+      - name: Commit binaries
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add plugin-linux-amd64 plugin-linux-arm64
+          git diff --staged --quiet || git commit -m "chore: rebuild plugin binaries"
+          git push
